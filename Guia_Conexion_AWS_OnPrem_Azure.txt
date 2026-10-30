@@ -1,0 +1,397 @@
+GUIA PASO A PASO – CONECTIVIDAD PRIVADA AWS → ON-PREMISE → AZURE
+Basada en los dos formularios compartidos:
+1. Solicitud permisos EKS-DID DESA - VS
+2. Solicitud de creación de regla FW V2 – NGFW Palo Alto
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Habilitar la comunicación desde un workload alojado en AWS hacia un
+servicio privado ubicado en Azure, utilizando la red On-Premise como
+tránsito.
+
+Flujo esperado:
+
+AWS (EKS / EC2 / aplicación)
+        |
+        | HTTPS TCP/443
+        v
+Red corporativa / On-Premise
+        |
+        | Enrutamiento corporativo
+        v
+Azure VNet / API privada
+
+IMPORTANTE:
+Los dos formularios compartidos documentan principalmente la habilitación
+de la comunicación desde AWS hacia la red On-Premise y las reglas de
+firewall requeridas.
+
+El tramo On-Premise → Azure debe existir previamente o ser validado con
+Networking. Si no existe, se deberá gestionar adicionalmente el
+enrutamiento/regla correspondiente hacia la VNet o Private Endpoint de
+Azure.
+
+
+======================================================================
+2. INFORMACIÓN QUE SE DEBE OBTENER ANTES DE INICIAR
+======================================================================
+
+Antes de crear las solicitudes, confirmar:
+
+AWS:
+- Nombre de la cuenta AWS.
+- AWS Account ID.
+- Application Code.
+- Servicio origen: EKS, EC2, Load Balancer, etc.
+- CIDR/IP origen.
+- Ambiente: Desarrollo, QA o Producción.
+
+Azure / destino:
+- Nombre de la API o servicio.
+- FQDN/URL privada del servicio.
+- IP privada destino, si aplica.
+- CIDR o segmento de Azure destino, si la gestión se realiza por segmento.
+- Puerto requerido, normalmente TCP/443.
+- Ambiente destino.
+- Confirmar que el servicio no es público.
+
+Red:
+- Confirmar la ruta AWS → On-Premise.
+- Confirmar la ruta On-Premise → Azure.
+- Confirmar resolución DNS privada si se utiliza un hostname.
+- Validar si se requiere comunicación únicamente de salida o bidireccional.
+
+
+======================================================================
+3. GESTIÓN 1 – DEMANDA INTERNA / PERMISOS DE RED
+   Formulario: "Solicitud permisos EKS-DID DESA - VS"
+======================================================================
+
+Esta gestión documenta la necesidad de comunicación y solicita los
+permisos de red.
+
+PASO 1
+Definir el título de la Demanda Interna.
+
+Ejemplo:
+"Establecer comunicación desde AWS hacia servicio privado en Azure"
+
+PASO 2
+Completar la descripción y justificación.
+
+Ejemplo:
+"Se requiere habilitar comunicación privada desde el workload desplegado
+en AWS hacia la API privada alojada en Azure. El tráfico utilizará la red
+corporativa On-Premise como tránsito y se realizará mediante HTTPS TCP/443."
+
+PASO 3
+Completar la información del ORIGEN.
+
+Campos:
+- Hostname Origen.
+- Rango de IPs o IP origen.
+- Ambiente.
+
+Ejemplo tomado del formulario:
+Hostname/Servicio:
+EKS
+
+Subnets documentadas:
+- subnet-0e439d51b51cf5f07 – us-east-1a
+- subnet-0aa47acb06056b123 – us-east-1b
+
+CIDR origen:
+- 10.34.11.0/25
+- 10.34.10.0/25
+
+Ambiente:
+Desarrollo
+
+NOTA:
+Si Networking solicita trabajar por segmento y no por IP puntual,
+utilizar el CIDR correspondiente al origen.
+
+PASO 4
+Completar la información del DESTINO.
+
+Campos:
+- Hostname destino.
+- IP / CIDR / URL destino.
+- Ambiente destino.
+- Puerto destino.
+
+En el ejemplo compartido aparece:
+Hostname:
+lassaadadid01
+
+IP:
+172.19.11.65
+
+Puerto:
+443
+
+Para una API en Azure, estos campos deben sustituirse por el hostname,
+IP privada o segmento real que Networking confirme para el servicio de
+Azure.
+
+PASO 5
+Definir el criterio de aceptación.
+
+Ejemplo:
+"Permisos de comunicación habilitados de acuerdo con lo solicitado,
+permitiendo conectividad HTTPS TCP/443 desde el segmento AWS autorizado
+hacia el servicio privado destino, utilizando la red corporativa como
+tránsito."
+
+PASO 6
+Revisar las consideraciones del formulario.
+
+- Validar primero que el permiso solicitado no exista.
+- TCP se considera protocolo por defecto.
+- Si se requiere UDP, debe especificarse.
+- Puertos especiales pueden requerir autorización de Ciberseguridad.
+- Comunicaciones bidireccionales deben justificarse y pueden requerir
+  autorización adicional.
+- Adjuntar las autorizaciones correspondientes a la DI.
+
+PASO 7
+Asignar la DI según indica el formulario.
+
+Área:
+Administración TI\Data Center Networking
+
+Responsable SCRUM indicado en el formulario:
+Gloribel Marleny Vigil De Rodriguez
+
+
+======================================================================
+4. GESTIÓN 2 – CREACIÓN DE REGLA EN FIREWALL NGFW PALO ALTO
+   Formulario: "SolicitudCreación de regla FW V2 1"
+======================================================================
+
+Esta gestión solicita la creación de las reglas de firewall necesarias
+para permitir el tráfico.
+
+PASO 1
+Completar los datos del proyecto.
+
+En el ejemplo compartido:
+Nombre del proyecto:
+AW1103045_PushNotification_CNA_GRD
+
+Responsable:
+FRANCISCO VLADIMIR CASTRO ALVARADO
+
+Application Code origen:
+AWS-AP024
+
+Cuenta AWS:
+BA-001-Cross_Channel-D
+
+AWS Account ID:
+730335499576
+
+CIDR de la cuenta:
+10.34.10.0/23
+
+PASO 2
+Completar el origen de la regla.
+
+Campos:
+- IP/CIDR Origen.
+- Cuenta de origen.
+- Tipo de servicio.
+
+Ejemplo:
+IP origen:
+10.34.10.0/23
+
+Cuenta:
+BA-001-Cross_Channel-D
+
+Tipo de servicio:
+EC2 / EKS, según corresponda al workload real.
+
+PASO 3
+Completar el destino.
+
+En los ejemplos del formulario aparecen destinos On-Premise como:
+- 172.32.88.217
+- detectidv8desa.banagricola.com (172.32.88.217)
+- 172.19.11.65
+
+Para la nueva conexión hacia Azure se debe colocar el destino definido
+por Networking.
+
+Puede ser:
+- IP privada de Azure.
+- FQDN privado.
+- Segmento CIDR destino.
+
+Si Networking indica que debe gestionarse segmento a segmento, evitar
+utilizar una IP puntual que pueda cambiar.
+
+PASO 4
+Definir puerto y protocolo.
+
+Para una API HTTPS:
+Puerto destino:
+443
+
+Protocolo:
+TCP
+
+Descripción:
+Puerto para conexión HTTPS.
+
+PASO 5
+Completar la justificación.
+
+Ejemplo:
+"Se requiere habilitar comunicación desde el workload alojado en AWS
+hacia la API privada en Azure. La comunicación utilizará la infraestructura
+de red On-Premise como tránsito y se realizará mediante HTTPS TCP/443."
+
+PASO 6
+Obtener la aprobación requerida.
+
+El formulario indica que las solicitudes de creación de reglas deben
+contar con aprobación del jefe directo del solicitante.
+
+También deben revisarse las excepciones de Ciberseguridad cuando
+corresponda.
+
+PASO 7
+Asignar la gestión de firewall.
+
+El formulario indica asignar a:
+erdarodr@bancoagricola.com.sv
+
+
+======================================================================
+5. VALIDACIÓN DEL TRAMO ON-PREMISE → AZURE
+======================================================================
+
+Los formularios compartidos no documentan en detalle el segundo tramo de
+la comunicación.
+
+Por lo tanto, antes de dar por completada la conectividad se debe solicitar
+a Networking la confirmación de:
+
+1. Existe ruta desde la red On-Premise hacia la VNet de Azure.
+2. El CIDR de AWS no se superpone con el CIDR de Azure.
+3. Existe ruta de retorno desde Azure hacia AWS/On-Premise.
+4. El firewall permite TCP/443 hacia el destino.
+5. Los NSG/Firewall de Azure permiten el tráfico proveniente del segmento
+   corporativo esperado.
+6. Si la API utiliza Private Endpoint, confirmar que el tráfico corporativo
+   puede alcanzar la IP privada del Private Endpoint.
+7. Si se utiliza un FQDN privado, confirmar resolución DNS desde AWS a través
+   de la infraestructura corporativa.
+8. Confirmar si el acceso debe configurarse por IP o, preferiblemente según
+   estándar de Networking, por segmento CIDR.
+
+
+======================================================================
+6. FLUJO FINAL ESPERADO
+======================================================================
+
+Ejemplo conceptual:
+
+Workload AWS
+EKS / EC2
+CIDR AWS
+10.34.10.0/23
+        |
+        | TCP/443
+        v
+Route Tables / conectividad AWS
+        |
+        v
+Firewall / Red On-Premise
+        |
+        | Regla NGFW Palo Alto
+        v
+Red corporativa
+        |
+        | Ruta privada hacia Azure
+        v
+Azure VNet
+        |
+        v
+Private Endpoint / API privada
+
+
+======================================================================
+7. PRUEBAS DESPUÉS DE IMPLEMENTAR
+======================================================================
+
+Desde el workload AWS validar:
+
+1. Resolución DNS:
+   nslookup <hostname-api-azure>
+
+2. Conectividad al puerto:
+   curl -vk https://<hostname-api-azure>
+
+   o
+
+   nc -vz <ip-destino> 443
+
+3. Validar que la conexión no esté saliendo a Internet.
+
+4. Validar respuesta HTTP de la API.
+
+5. Validar logs de la aplicación.
+
+6. Solicitar a Networking confirmación de que el tráfico está pasando
+   por la ruta/firewall esperado.
+
+7. Si falla:
+   - revisar DNS,
+   - rutas AWS,
+   - firewall On-Premise,
+   - ruta On-Premise → Azure,
+   - NSG/firewall Azure,
+   - ruta de retorno,
+   - autenticación de la API.
+
+
+======================================================================
+8. CRITERIO DE ACEPTACIÓN GENERAL
+======================================================================
+
+"La conectividad se considerará habilitada cuando el workload autorizado
+en AWS pueda resolver y consumir mediante HTTPS TCP/443 la API privada
+ubicada en Azure, utilizando la red On-Premise como tránsito, con las
+reglas de firewall, rutas y permisos correspondientes habilitados y sin
+exposición de la API a Internet."
+
+
+======================================================================
+9. RESUMEN DE LAS DOS GESTIONES
+======================================================================
+
+GESTIÓN 1:
+Demanda Interna / Permisos de Red
+Objetivo:
+Documentar origen, destino, ambiente, puerto y necesidad de comunicación,
+y solicitar a Networking la habilitación correspondiente.
+
+GESTIÓN 2:
+Regla NGFW Palo Alto
+Objetivo:
+Crear la regla de firewall que permita el tráfico desde el segmento AWS
+hacia el destino corporativo/Azure definido.
+
+RESULTADO:
+AWS → Red On-Premise → Azure API privada.
+
+NOTA FINAL:
+Los valores de IP/CIDR/FQDN del destino Azure deben ser confirmados por
+Networking antes de enviar las gestiones definitivas. Los destinos
+172.19.11.65 y 172.32.88.217 incluidos en los formularios corresponden
+al ejemplo existente y no deben reutilizarse para una nueva API sin
+validación.

@@ -1,0 +1,404 @@
+GUIA PASO A PASO – CONECTIVIDAD PRIVADA AWS → ON-PREMISE → AZURE
+
+Basada en las dos gestiones/formularios proporcionados:
+1. Solicitud permisos EKS-DID DESA - VS
+2. Solicitud de creación de regla FW V2 – NGFW Palo Alto
+
+IMPORTANTE:
+Los valores incluidos en esta guía corresponden a los datos proporcionados
+para la implementación y deben utilizarse como valores reales en las gestiones.
+No deben considerarse ejemplos.
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Habilitar la comunicación privada desde un workload alojado en AWS hacia
+un servicio privado ubicado en Azure, utilizando la red On-Premise como
+tránsito.
+
+Flujo esperado:
+
+AWS
+Cuenta BA-001-Cross_Channel-D
+Account ID 730335499576
+EKS / workload
+        |
+        | HTTPS TCP/443
+        v
+Red corporativa / On-Premise
+        |
+        | Enrutamiento corporativo
+        v
+Azure / API privada
+
+
+======================================================================
+2. DATOS DEFINIDOS PARA LA IMPLEMENTACIÓN
+======================================================================
+
+Cuenta AWS:
+BA-001-Cross_Channel-D
+
+AWS Account ID:
+730335499576
+
+Región AWS:
+us-east-1
+
+Application Code:
+AWS-AP024
+
+Proyecto:
+AW1103045_PushNotification_CNA_GRD
+
+Responsable:
+FRANCISCO VLADIMIR CASTRO ALVARADO
+
+CIDR general de origen AWS:
+10.34.10.0/23
+
+Subnets EKS:
+- subnet-0e439d51b51cf5f07 – us-east-1a
+- subnet-0aa47acb06056b123 – us-east-1b
+
+CIDR de subnets:
+- 10.34.11.0/25
+- 10.34.10.0/25
+
+Destinos definidos:
+- 172.32.88.217
+- detectidv8desa.banagricola.com (172.32.88.217)
+- 172.19.11.65
+- lassaadadid01
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+Ambiente:
+Desarrollo
+
+Finalidad:
+Habilitar la comunicación desde AWS hacia DetectID / servicios internos,
+utilizando la red On-Premise como tránsito hacia Azure.
+
+
+======================================================================
+3. GESTIÓN 1 – SOLICITUD DE PERMISOS DE RED
+   Formulario: "Solicitud permisos EKS-DID DESA - VS"
+======================================================================
+
+Esta gestión permite solicitar formalmente la habilitación de la
+comunicación desde AWS hacia la red corporativa.
+
+PASO 1 – CREAR LA DEMANDA INTERNA
+
+Título sugerido:
+"Establecer comunicación privada desde AWS hacia Azure vía On-Premise"
+
+PASO 2 – DESCRIPCIÓN
+
+Utilizar una descripción como:
+
+"Se requiere habilitar comunicación privada desde el workload desplegado
+en AWS hacia servicios privados accesibles a través de la red corporativa
+On-Premise y posteriormente hacia Azure. La comunicación será realizada
+mediante HTTPS TCP/443."
+
+PASO 3 – CONFIGURAR EL ORIGEN
+
+Servicio origen:
+EKS
+
+Cuenta AWS:
+BA-001-Cross_Channel-D
+
+AWS Account ID:
+730335499576
+
+Application Code:
+AWS-AP024
+
+Subnets:
+- subnet-0e439d51b51cf5f07 – us-east-1a
+- subnet-0aa47acb06056b123 – us-east-1b
+
+CIDR:
+- 10.34.11.0/25
+- 10.34.10.0/25
+
+Ambiente:
+Desarrollo
+
+PASO 4 – CONFIGURAR EL DESTINO
+
+Hostname:
+lassaadadid01
+
+IP:
+172.19.11.65
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+Adicionalmente, dentro del flujo se utiliza:
+
+Hostname:
+detectidv8desa.banagricola.com
+
+IP:
+172.32.88.217
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+PASO 5 – JUSTIFICACIÓN
+
+"Se requiere habilitar la comunicación desde la infraestructura AWS de
+Capa Media Canales hacia los servicios privados requeridos para la
+iniciativa de notificaciones. El tráfico será transportado a través de
+la red corporativa On-Premise y posteriormente hacia Azure."
+
+PASO 6 – CRITERIO DE ACEPTACIÓN
+
+"La gestión se considerará completada cuando exista conectividad TCP/443
+desde los segmentos AWS autorizados hacia los destinos definidos, a
+través de la infraestructura de red corporativa, permitiendo el consumo
+del servicio privado requerido."
+
+PASO 7 – ASIGNACIÓN
+
+Área:
+Administración TI\Data Center Networking
+
+Responsable SCRUM indicado:
+Gloribel Marleny Vigil De Rodriguez
+
+
+======================================================================
+4. GESTIÓN 2 – CREACIÓN DE REGLA DE FIREWALL NGFW PALO ALTO
+   Formulario: "SolicitudCreación de regla FW V2 1"
+======================================================================
+
+Esta gestión solicita la creación de las reglas necesarias en el firewall
+corporativo para permitir el tráfico.
+
+PASO 1 – DATOS DEL PROYECTO
+
+Proyecto:
+AW1103045_PushNotification_CNA_GRD
+
+Responsable:
+FRANCISCO VLADIMIR CASTRO ALVARADO
+
+Application Code:
+AWS-AP024
+
+Cuenta AWS:
+BA-001-Cross_Channel-D
+
+AWS Account ID:
+730335499576
+
+CIDR origen:
+10.34.10.0/23
+
+PASO 2 – REGLAS A SOLICITAR
+
+REGLA 1
+
+Origen:
+10.34.10.0/23
+
+Destino:
+172.32.88.217
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+
+REGLA 2
+
+Origen:
+10.34.10.0/23
+
+Destino:
+detectidv8desa.banagricola.com
+
+IP destino:
+172.32.88.217
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+
+REGLA 3
+
+Origen:
+10.34.10.0/23
+
+Destino:
+172.19.11.65
+
+Hostname asociado:
+lassaadadid01
+
+Puerto:
+443
+
+Protocolo:
+TCP
+
+
+PASO 3 – JUSTIFICACIÓN
+
+"Se requiere habilitar comunicación desde la cuenta AWS
+BA-001-Cross_Channel-D hacia los servicios privados definidos para la
+iniciativa de Notificación Push. La comunicación será realizada mediante
+HTTPS TCP/443 y utilizará la infraestructura On-Premise como tránsito
+hacia Azure."
+
+PASO 4 – APROBACIÓN
+
+La gestión debe contar con la aprobación correspondiente del responsable
+o jefe directo definido por el proceso interno.
+
+Cuando aplique, también deben adjuntarse las aprobaciones adicionales de
+Ciberseguridad.
+
+PASO 5 – ASIGNACIÓN DE LA GESTIÓN DE FIREWALL
+
+Asignar a:
+erdarodr@bancoagricola.com.sv
+
+
+======================================================================
+5. FLUJO DE COMUNICACIÓN
+======================================================================
+
+El flujo técnico queda definido de la siguiente manera:
+
+AWS
+Cuenta: BA-001-Cross_Channel-D
+Account ID: 730335499576
+CIDR: 10.34.10.0/23
+EKS / workload
+        |
+        | TCP/443
+        v
+Firewall / red corporativa On-Premise
+        |
+        +--> 172.32.88.217
+        |    detectidv8desa.banagricola.com
+        |
+        +--> 172.19.11.65
+             lassaadadid01
+        |
+        v
+Enrutamiento corporativo
+        |
+        v
+Azure
+API / servicio privado
+
+
+======================================================================
+6. VALIDACIÓN DEL TRAMO ON-PREMISE → AZURE
+======================================================================
+
+Una vez habilitadas las dos gestiones anteriores, Networking debe validar
+que la red On-Premise tenga conectividad hacia Azure.
+
+Validar:
+
+1. Ruta existente desde On-Premise hacia Azure.
+2. Ruta de retorno desde Azure hacia la red corporativa/AWS.
+3. Reglas de firewall habilitadas.
+4. Puerto TCP/443 permitido.
+5. Resolución DNS correcta para los hostnames utilizados.
+6. Acceso hacia la IP privada o servicio privado en Azure.
+7. No existencia de traslape de CIDR entre AWS y Azure.
+8. Confirmación de que el tráfico no requiere exposición pública.
+
+
+======================================================================
+7. PRUEBAS DE CONECTIVIDAD
+======================================================================
+
+Desde el workload en AWS:
+
+Validación DNS:
+
+nslookup detectidv8desa.banagricola.com
+
+
+Validación HTTPS:
+
+curl -vk https://detectidv8desa.banagricola.com
+
+
+Validación puerto:
+
+nc -vz 172.32.88.217 443
+
+nc -vz 172.19.11.65 443
+
+
+También validar:
+
+- Logs de la aplicación.
+- Logs del firewall.
+- Trazabilidad del tráfico.
+- Respuesta HTTP del servicio.
+- Que el tráfico siga la ruta AWS → On-Premise → Azure.
+
+
+======================================================================
+8. CRITERIO DE ACEPTACIÓN GENERAL
+======================================================================
+
+"La conectividad se considerará habilitada cuando el workload autorizado
+en AWS pueda establecer comunicación HTTPS TCP/443 con los servicios
+privados definidos, utilizando la red On-Premise como tránsito hacia
+Azure, con las rutas, reglas de firewall y permisos correspondientes
+habilitados."
+
+
+======================================================================
+9. RESUMEN DE LAS DOS GESTIONES
+======================================================================
+
+GESTIÓN 1:
+Solicitud de permisos de red para habilitar la comunicación desde EKS/AWS
+hacia los destinos definidos.
+
+GESTIÓN 2:
+Creación de reglas NGFW Palo Alto para permitir TCP/443 desde
+10.34.10.0/23 hacia:
+
+- 172.32.88.217
+- detectidv8desa.banagricola.com
+- 172.19.11.65
+- lassaadadid01
+
+RESULTADO FINAL:
+
+AWS
+→ On-Premise
+→ Azure
+→ Servicio/API privada
