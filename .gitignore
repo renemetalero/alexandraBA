@@ -52,7 +52,7 @@ ai-analysis/
 analysis-output/
 llm-output/
 model-output/
-prompt-history/
+prompt-history/67
 chat-logs/
 gpt-logs/
 claude-logs/
